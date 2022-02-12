@@ -1,0 +1,71 @@
+import pandas as pd
+from numpy import mean, std
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.ensemble import RandomForestClassifier
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.utils import to_categorical
+import numpy
+#import all libraries
+
+dataFrame = pd.read_csv("./data.csv", index_col = False)  
+#open the csv file through the PANDAS library
+
+#subdivision of the dataset into 2 dataframes X for the features, i.e. the attributes to be used for each sample and Y
+# which represents the target to be predicted at the end
+
+x = dataFrame[[ 'Soddisfa_Aspettative', 'Mantiene_Promesse', 'Attento_Bisogni',
+                'Attivit_Marketing', 'Campagne_Pubblicitarie',
+                'Campagne_Promozione', 'Brand_Amicizie', 'Brand_Familiari',
+                'Brand_Etnico', 'Acquisto_Abitualmente', 'Modello_Acquisto',
+                'Promozioni_Sconti', 'Brand_Rilevante', 'Brand_Positivi',
+                'Brand_Percepire', 'Relazione_Lunga', 'Comunicazione_Brand',
+                'Brand_Coerente', 'Considero_No_Brand', 'Rimango_Fedele',
+                'Identifico_Brand', 'Completamente_Soddisfatto',
+                'Ripeto_Acquisto', 'Attributi_Distintivi', 'Sento_Angosciato',
+                'Prodotto_Brand', 'Elevato_Coinvolgimento', 'Scelta_Acquisto',
+                'Coinvolgimento_Verso', 'Nutro']]
+
+y = dataFrame['Fedele']
+
+
+print('Input: ', x)
+print('Output: ', y)
+yMLP = to_categorical(y)
+
+# Create the model
+model = Sequential()
+# we have imported the fundamental class which represents the sequence of Layers of our model.
+# our model that is the set of "pieces" that will make up the algorithm which in this case is the neural network will be composed as a linear sequence of Layers.
+# we would then have an input layer, n intermediate (hidden) layers and an output layer.
+# the sequence includes these three elements.
+# the model we are going to create will be composed of a simple sequence but with keras it is possible to create models composed of several sequences.
+# sequential is precisely the class that allows us to gradually add layer by layer from the input to the output of the sequence.
+
+model.add(Dense(350, input_shape = (30,), activation = 'relu'))
+model.add(Dense(50, activation = 'relu'))
+model.add(Dense(2, activation = 'softmax'))
+# we have also imported the classes of the layers that interest us. The Dense class: represents a normal layer composed of n neurons,
+# in practice the classic scheme of the neural network in which the inputs are weighed and transferred through the activation function to the output.
+# with these 2 elements Sequential and Dense we are going to create our very simple first prototype of artificial neural network.
+
+# these 4 lines of code represent the simple MLP model with 30 inputs an intermediate layer of 350 neurons with reLU activation
+# and outputs with relu and softmax transfer function.
+# we add the code to indicate which method will be used to determine the cost calculation and the metric to evaluate
+# the learning status of the network and the optimization algorithm.
+# We do this using the "compile" function of the model itself
+
+model.compile(loss = 'categorical_crossentropy', optimizer = 'adam',
+              metrics = ['accuracy'])
+
+#and finally we launch 100 epochs of learning with mini batches of 20 elements
+model.fit (x, yMLP, epochs = 100, batch_size = 20, verbose = 1,
+          validation_split = 0.3)
+
+# Test the model after training.
+
+# Now we measure and test the accuracy in the test dataset
+testResults = model.evaluate (x, yMLP, verbose = 1)
+
+print('Accuracy MLP (Test Set): %.3f' % testResults[1])
