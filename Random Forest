@@ -1,0 +1,79 @@
+import pandas as pd
+from numpy import mean, std
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.ensemble import RandomForestClassifier
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.utils import to_categorical
+import numpy
+#importo tutte le librerie
+
+dataFrame = pd.read_csv("./data.csv", index_col = False)  
+#apertura del file csv attraverso la libreria PANDAS
+
+#subdivision of the dataset into 2 dataframes X for the features i.e. the attributes to be used for each sample and Y
+# which represents the target to be predicted at the end
+
+x = dataFrame[[ 'Soddisfa_Aspettative', 'Mantiene_Promesse', 'Attento_Bisogni',
+                'Attivit_Marketing', 'Campagne_Pubblicitarie',
+                'Campagne_Promozione', 'Brand_Amicizie', 'Brand_Familiari',
+                'Brand_Etnico', 'Acquisto_Abitualmente', 'Modello_Acquisto',
+                'Promozioni_Sconti', 'Brand_Rilevante', 'Brand_Positivi',
+                'Brand_Percepire', 'Relazione_Lunga', 'Comunicazione_Brand',
+                'Brand_Coerente', 'Considero_No_Brand', 'Rimango_Fedele',
+                'Identifico_Brand', 'Completamente_Soddisfatto',
+                'Ripeto_Acquisto', 'Attributi_Distintivi', 'Sento_Angosciato',
+                'Prodotto_Brand', 'Elevato_Coinvolgimento', 'Scelta_Acquisto',
+                'Coinvolgimento_Verso', 'Nutro']]
+
+y = dataFrame['Fedele']
+
+
+print('Input: ', x)
+print('Output: ', y)
+
+# Define the model.
+model = RandomForestClassifier (n_estimators = 20)
+#n_estimators is a parameter inserted to decide with how many trees we want to create the forest and choosing 20 we are
+#saying that the model will create 20 subtrees which it will combine to optimize final accuracy rather than using just one tree
+
+model.fit (x, y)
+#Here we make a fit on this model by inserting the features and the target as X and Y
+
+
+# Evaluate the model.
+cv = RepeatedStratifiedKFold (n_splits = 10, n_repeats = 3, random_state = 1)
+#Kfold = statistical method to divide the dataset into n_splits blocks to be used in a combined way for training and testing
+# in particular, here we are using 10 which is the standard (or better the best practice) experimental that is understood to be in the
+#Most of the cases the best choice.
+#In addition to the 10-Fold here we are using some particular extensions which are Repeated and Stratified:
+#STRATIFIED: in which in each subdivision the distribution of the samples between the classes is kept constant to guarantee (almost)
+# the same weight between the samples of different blocks.
+#REPEATED: the cross validation is repeated n times, and the data of each block is randomized before each repetition.
+nScores = cross_val_score (model, x, y, scoring = 'accuracy', cv = cv,
+                          n_jobs = -1, error_score = 'raise')
+#model, x, y, represent our data, scoring represents what we want to calculate that is the accuracy of the model, cv is the object
+#created in the previous line with the 10-Fold
+#n_jobs is the number of jobs to run in parallel by training the champion and calculating the result.
+
+# Performance report.
+print ('Accuracy Random Forest (Test Set):% .3f'% mean (nScores))
+# I mean (nScores) because I want to get the average of the results obtained with the cross validation for each block.
+
+
+##############################################################################################################################
+# Extract single tree
+
+estimator = model.estimators_ [5] # I empirically choose the estimator represented among all the possible versions of the random forest,
+#only the tree obtained from the forest with averaged "5 trees"
+
+from sklearn.tree import plot_tree
+import matplotlib.pyplot as plt
+
+# save plot
+plt.figure (figsize = (100,50))
+plot_tree (estimator, filled = True, fontsize = 6)
+plt.savefig ('tree_high_dpi', dpi = 300)
+# here I simply generate the .png image with display parameters such as resolution (dpi)
+################################################################################################################################
